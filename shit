@@ -1,0 +1,65 @@
+TRUNCATE TABLE otchet;
+DECLARE
+  start_of_week DATE;
+  end_of_week DATE;
+  --orgvalue D260000003228.F260000004375%TYPE;
+  struct_pod D260000003220.F260000004348%TYPE;
+  num_plan number;
+  num_neplan number;
+  num_all number;
+  num_over number;
+  num_nekon number;
+  procVP number;
+  ProcG number;
+  SP VARCHAR2(50):=260000022784;
+  
+BEGIN
+  start_of_week := TRUNC(SYSDATE, 'IW');
+  end_of_week := NEXT_DAY(start_of_week + 5, 'SUN') - 2;
+  FOR row IN (SELECT F260000004348 FROM D260000003220) LOOP
+    struct_pod := row.F260000004348;
+    select count(*) 
+    INTO  num_all
+    FROM j260000003341_row
+    WHERE date$ >= start_of_week and  date$ <= end_of_week and A260000023613 IS NOT NULL and A260000023610=SP and is_dirty$ = 0 and level$ = 0;
+    select count(*) 
+    INTO  num_neplan
+    FROM j260000003341_row
+    WHERE date$ >= start_of_week and  date$ <= end_of_week and A260000023613 IS NOT NULL and A260000023610=SP and A260000023629=260000022808 and is_dirty$ = 0 and level$ = 0;
+    select count(*) 
+    INTO  num_over
+    FROM j260000003341_row
+    WHERE date$ >= start_of_week and  date$ <= end_of_week and A260000023613 IS NOT NULL and A260000023610=SP and A260000023624 is not NULL AND A260000023629=260000022807 and is_dirty$ = 0 and level$ = 0;
+    select count(*) 
+    INTO  num_plan
+    FROM j260000003341_row
+    WHERE date$ >= start_of_week and  date$ <= end_of_week and A260000023613 IS NOT NULL and A260000023610=SP and A260000023629=260000022807 and is_dirty$ = 0 and level$ = 0;
+    DBMS_OUTPUT.PUT_LINE(struct_pod); 
+    DBMS_OUTPUT.PUT_LINE('Показатель '||TO_CHAR(start_of_week, 'DD.MM')||'-'|| TO_CHAR(end_of_week, 'DD.MM'));
+    DBMS_OUTPUT.PUT_LINE('Плановые работы '||num_plan);
+    DBMS_OUTPUT.PUT_LINE('Внеплановые работы '||num_neplan);
+    DBMS_OUTPUT.PUT_LINE('Всего работы '||num_all );
+    DBMS_OUTPUT.PUT_LINE('Завершенные плановые работы '||num_over);
+    num_nekon:=num_plan - num_over;
+    DBMS_OUTPUT.PUT_LINE('Незавершенные плановые работы '||num_nekon );
+    DBMS_OUTPUT.PUT_LINE('Работы продолжаются ');
+    DBMS_OUTPUT.PUT_LINE('КПЭ(%) '||TO_CHAR(start_of_week, 'DD.MM')||'-'|| TO_CHAR(end_of_week, 'DD.MM'));
+    procVP:=ceil(num_neplan/num_plan*100);
+    procG:=ceil(num_over/num_plan*100);
+    DBMS_OUTPUT.PUT_LINE('Внеплановые работы ->0% '||procVP||'%');
+    DBMS_OUTPUT.PUT_LINE('Выполнение графика->100% '||procG||'%' );
+    SP:=SP+1;
+  END LOOP;  
+
+END;
+/
+select * from otchet; 
+/*SELECT * FROM j260000003341_row WHere date$>start_of_week and is_dirty$ = 0 and level$ = 0;
+SELECT * FROM j260000003341_row
+SELECT * FROM D260000003220;
+SELECt *
+FROM j260000003341_row
+WHERE date$ >= start_of_week and  date$ < end_of_week and A260000023610='260000022784' and is_dirty$ = 0 and level$ = 0;
+SELECt *
+FROM j260000003341_row
+WHERE date$ < TRUNC(SYSDATE, 'IW')and  date$< NEXT_DAY(TRUNC(SYSDATE, 'IW')+ 5, 'SUN') - 2 and A260000023610='260000022784' and A260000023613 IS NOT NULL and is_dirty$ = 0 and level$ = 0;*/
